@@ -1,0 +1,106 @@
+#!/bin/bash
+
+WORK_DIR="/mnt/c/Users/alaya/DevOps/docker-env"
+VOLUME_DIR="$WORK_DIR/volume"
+
+CMD="$1"
+SERVICE="$2"
+
+start() {
+  case "$SERVICE" in
+  "jenkins")
+    start_jenkins
+    ;;
+  "airflow")
+    start_airflow
+    ;;
+  esac
+}
+
+stop() {
+  case "$SERVICE" in
+  "jenkins")
+    stop_jenkins
+    ;;
+  "airflow")
+    stop_airflow
+    ;;
+  esac
+}
+
+clean() {
+  case "$SERVICE" in
+  "jenkins")
+    clean_jenkins
+    ;;
+  "airflow")
+    clean_airflow
+    ;;
+  esac
+}
+
+start_jenkins() {
+  docker run -d --name jenkins -v $VOLUME_DIR/jenkins:/var/jenkins_home -p 8080:8080 -p 50000:50000 jenkins/jenkins:2.384-jdk11
+}
+start_vault() {
+  docker run -d --name vault -v $VOLUME_DIR/vault/logs:/vault/logs -v $VOLUME_DIR/vault/file:/vault/file -v $VOLUME_DIR/vault/config:/vault/config -p 8200:8200 vault:1.12.2
+}
+
+start_airflow() {
+  docker-compose -f "$WORK_DIR"/airflow/docker-compose.yaml up airflow-init -d &&
+    docker-compose -f "$WORK_DIR"/airflow/docker-compose.yaml up -d
+}
+
+stop_jenkins() {
+  docker stop jenkins
+}
+
+stop_airflow() {
+  docker-compose -f "$WORK_DIR"/airflow/docker-compose.yaml down -d
+}
+
+start_all() {
+  start_jenkins
+  start_airflow
+}
+
+stop_all() {
+  stop_jenkins
+  stop_airflow
+}
+clean_jenkins() {
+  docker rm -f jenkins
+}
+
+clean_airflow() {
+  docker-compose -f "$WORK_DIR"/airflow/docker-compose.yaml down -v
+}
+
+clean_all() {
+  clean_jenkins
+  clean_airflow
+}
+
+case "$CMD" in
+"start")
+  if [ "$SERVICE" == "all" ]; then
+    start_all
+  else
+    start "$SERVICE"
+  fi
+  ;;
+"stop")
+  if [ "$SERVICE" == "all" ]; then
+    stop_all
+  else
+    stop "$SERVICE"
+  fi
+  ;;
+"clean")
+  if [ "$SERVICE" == "all" ]; then
+    clean_all
+  else
+    clean "$SERVICE"
+  fi
+  ;;
+esac

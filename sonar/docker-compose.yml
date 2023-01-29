@@ -1,0 +1,13 @@
+version: "3"
+services:
+  sonarqube:
+    image: sonarqube:latest
+    container_name: sonarqube
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: true
+    volumes:
+      - ../volume/sonar/sonarqube_data:/opt/sonarqube/data
+      - ../volume/sonar/sonarqube_extensions:/opt/sonarqube/extensions
+      - ../volume/sonar/sonarqube_logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"

@@ -1,0 +1,32 @@
+version: "3.7"
+services:
+  vault:
+    image: vault:1.12.2
+    container_name: vault
+    hostname: vault
+    ports:
+      - 8200:8200
+    volumes:
+      - ../volume/vault/config/config.hcl:/vault/config/config.hcl
+      - ../volume/vault/data:/vault/file/
+    environment:
+      - VAULT_ADDR=http://localhost:8200
+    cap_add:
+      - IPC_LOCK
+    command: server
+    restart: always
+
+  vault-init:
+    image: vault:1.12.2
+    container_name: vault-init
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - MY_VAULT_TOKEN=${MY_VAULT_TOKEN:-test}
+    volumes:
+      - ../volume/vault/vault-root-token:/vault/file/vault-root-token
+      - ../volume/vault/vault-init.sh:/usr/local/bin/vault-init.sh
+      - ../volume/vault/data:/vault/file/
+    command: /usr/local/bin/vault-init.sh
+    restart: on-failure
+    depends_on:
+      - vault
